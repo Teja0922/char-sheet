@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG Character Sheet</title>
+<style>
+body {
+  font-family: "Cinzel", serif;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  background: radial-gradient(circle at top, #0a0a0a, #1a1a1a);
+  color: #eee;
+}
+h1 { color: #f5d300; text-align: center; font-size: 3em; }
+h2 { color: #ffcc00; border-bottom: 1px solid #555; padding-bottom: 5px; margin-top: 30px; }
+label { font-weight: bold; display: block; margin-top: 10px; }
+select, textarea, input[type="text"] { width: 100%; padding: 6px; margin-top: 4px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #666; background-color: #222; color: #eee; }
+textarea { resize: vertical; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: #111; }
+table, th, td { border: 1px solid #555; }
+th, td { padding: 8px; text-align: center; color: #eee; }
+th { background-color: #333; }
+.submit-btn, .info-btn { background-color: #4CAF50; color: white; padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; }
+.submit-btn:hover, .info-btn:hover { background-color: #45a049; }
+/* Modal */
+.modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+.modal-content { background-color: #1a1a1a; margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 900px; color: #eee; }
+.close-btn { float: right; font-size: 22px; font-weight: bold; cursor: pointer; }
+.close-btn:hover { color: #f00; }
+.modal h2 { color: #ffcc00; }
+</style>
+</head>
+<body>
+
+<h1>RPG Character Sheet</h1>
+<form id="characterForm">
+<h2>Basic Information</h2>
+<label>Name:<input type="text" name="Name" required></label>
+<label>Player:<input type="text" name="Player" required></label>
+
+<h2>Race</h2>
+<select id="raceSelect" onchange="updateAttributes()" required>
+  <option value="">-- Select Race --</option>
+  <option value="Human">Human</option>
+  <option value="Elf">Elf</option>
+  <option value="Dwarf">Dwarf</option>
+  <option value="Orc">Orc</option>
+  <option value="Halfling">Halfling</option>
+  <option value="Gnome">Gnome</option>
+  <option value="Tiefling">Tiefling</option>
+  <option value="Dragonborn">Dragonborn</option>
+  <option value="Half-Elf">Half-Elf</option>
+  <option value="Half-Orc">Half-Orc</option>
+</select>
+<button type="button" class="info-btn" onclick="showRaces()">Race Info</button>
+
+<h2>Class</h2>
+<select id="classSelect" onchange="updateAttributes()" required>
+  <option value="">-- Select Class --</option>
+  <option value="Fighter">Fighter</option>
+  <option value="Wizard">Wizard</option>
+  <option value="Cleric">Cleric</option>
+  <option value="Rogue">Rogue</option>
+  <option value="Ranger">Ranger</option>
+  <option value="Paladin">Paladin</option>
+  <option value="Bard">Bard</option>
+  <option value="Barbarian">Barbarian</option>
+  <option value="Druid">Druid</option>
+  <option value="Monk">Monk</option>
+</select>
+<button type="button" class="info-btn" onclick="showClasses()">Class Info</button>
+
+<h2>Deity</h2>
+<select id="deitySelect" onchange="updateAttributes()" required>
+  <option value="">-- Select a Deity --</option>
+  <option value="Ignar">Ignar (Aries)</option>
+  <option value="Terral">Terral (Taurus)</option>
+  <option value="Zephyra">Zephyra (Gemini)</option>
+  <option value="Lunaria">Lunaria (Cancer)</option>
+  <option value="Solarys">Solarys (Leo)</option>
+  <option value="Verdantia">Verdantia (Virgo)</option>
+  <option value="Equitas">Equitas (Libra)</option>
+  <option value="Obscura">Obscura (Scorpio)</option>
+  <option value="Aetherion">Aetherion (Sagittarius)</option>
+  <option value="Montara">Montara (Capricorn)</option>
+  <option value="Aquariel">Aquariel (Aquarius)</option>
+  <option value="Thalassia">Thalassia (Pisces)</option>
+</select>
+<button type="button" class="info-btn" onclick="showDeities()">Deity Info</button>
+
+<h2>Attributes</h2>
+<table>
+<tr><th>STR</th><th>DEX</th><th>CON</th><th>INT</th><th>WIS</th><th>CHA</th></tr>
+<tr>
+<td><input type="text" id="STR" readonly></td>
+<td><input type="text" id="DEX" readonly></td>
+<td><input type="text" id="CON" readonly></td>
+<td><input type="text" id="INT" readonly></td>
+<td><input type="text" id="WIS" readonly></td>
+<td><input type="text" id="CHA" readonly></td>
+</tr>
+</table>
+
+<h2>Backstory / Notes</h2>
+<textarea name="Backstory" rows="6"></textarea>
+<button type="submit" class="submit-btn">Submit Character</button>
+</form>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2 id="modalTitle"></h2>
+    <table>
+      <thead><tr id="modalHeader"></tr></thead>
+      <tbody id="modalBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// --- Data (races, classes, deities) ---
+const races = { /* your races object */ };
+const classes = { /* your classes object */ };
+const deities = [ /* your deities array */ ];
+
+// --- Functions ---
+function updateAttributes() {
+  const race = races[document.getElementById('raceSelect').value] || {STR:0,DEX:0,CON:0,INT:0,WIS:0,CHA:0};
+  const cls = classes[document.getElementById('classSelect').value] || {STR:0,DEX:0,CON:0,INT:0,WIS:0,CHA:0};
+  const deityName = document.getElementById('deitySelect').value;
+  const deity = deities.find(d => d.Name === deityName)?.Bonuses || {STR:0,DEX:0,CON:0,INT:0,WIS:0,CHA:0};
+  document.getElementById('STR').value = race.STR + cls.STR + deity.STR;
+  document.getElementById('DEX').value = race.DEX + cls.DEX + deity.DEX;
+  document.getElementById('CON').value = race.CON + cls.CON + deity.CON;
+  document.getElementById('INT').value = race.INT + cls.INT + deity.INT;
+  document.getElementById('WIS').value = race.WIS + cls.WIS + deity.WIS;
+  document.getElementById('CHA').value = race.CHA + cls.CHA + deity.CHA;
+}
+
+// --- Modal Functions (showRaces, showClasses, showDeities, closeModal) ---
+function showModal(title, headers, rows) { /* same as before */ }
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function showRaces() { /* same as before */ }
+function showClasses() { /* same as before */ }
+function showDeities() { /* same as before */ }
+window.onclick = function(event) { if(event.target == document.getElementById('modal')) closeModal(); }
+
+// --- Form Submission ---
+document.getElementById('characterForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const payload = {
+    name: this.Name.value,
+    player: this.Player.value,
+    race: document.getElementById('raceSelect').value,
+    cls: document.getElementById('classSelect').value,
+    deity: document.getElementById('deitySelect').value,
+    STR: document.getElementById('STR').value,
+    DEX: document.getElementById('DEX').value,
+    CON: document.getElementById('CON').value,
+    INT: document.getElementById('INT').value,
+    WIS: document.getElementById('WIS').value,
+    CHA: document.getElementById('CHA').value,
+    backstory: this.Backstory.value || "No backstory provided"
+  };
+
+  const sheetUrl = "https://script.google.com/macros/s/AKfycbyAi9zqauDvUpAYJUHG5z1Xjvd70TckH-DrDZcmDjVdmYCW7qChve8qPpyt9GtD9fDh_Q/exec";
+
+  fetch(sheetUrl, {
+    method: "POST",
+    mode: "cors",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.status === "success"){
+      alert("Character submitted successfully!");
+      this.reset();
+      updateAttributes();
+    } else alert("Submission failed: " + JSON.stringify(data));
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error submitting character: " + err);
+  });
+});
+</script>
+</body>
+</html>
